@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101010">
+<title>FFH4X.</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+:root{--red:#ff2525;--bg:#101010;--panel:#151515}
+body{background:var(--bg);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;overflow-x:hidden}
+.panel{width:360px;max-width:100%;background:var(--panel);border:1px solid var(--red);border-radius:15px;box-shadow:0 0 25px #ff000033;overflow:hidden}
+.header{background:#1c1c1c;padding:17px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--red)}
+.logo{color:var(--red);font-size:24px;font-weight:900;letter-spacing:2px}.logo span{color:#fff}
+.close{background:var(--red);border:0;color:#fff;font-size:20px;width:32px;height:30px;border-radius:7px;cursor:pointer}
+.content{padding:17px}.status{color:#888;font-size:12px;text-align:center;margin-bottom:15px}
+.section{color:#ff3333;font-size:12px;font-weight:bold;margin:17px 0 10px;letter-spacing:1px}
+.aim-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.aim-btn{padding:13px 4px;background:#252525;border:1px solid #383838;color:#fff;border-radius:8px;cursor:pointer;font-size:13px;transition:.2s}
+.aim-btn.active{background:var(--red);border-color:var(--red);box-shadow:0 0 12px #ff252544}
+.row{display:flex;align-items:center;justify-content:space-between;margin:15px 0;font-size:14px;gap:12px}
+.switch{width:42px;height:23px;position:relative;flex-shrink:0}.switch input{display:none}
+.track{position:absolute;inset:0;background:#444;border-radius:30px;cursor:pointer;transition:.2s}
+.track:before{content:"";position:absolute;height:17px;width:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.track{background:var(--red)}.switch input:checked+.track:before{transform:translateX(19px)}
+.range-info{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.range-info span:last-child{color:#ff3333}input[type=range]{width:100%;accent-color:var(--red);cursor:pointer}
+.select{background:#252525;color:#fff;border:1px solid #444;border-radius:7px;padding:11px;width:100%;outline:none}
+.inject{margin-top:20px;width:100%;padding:15px;background:var(--red);border:0;color:#fff;border-radius:9px;font-weight:bold;font-size:15px;cursor:pointer;transition:.2s}
+.inject:hover{filter:brightness(.9)}.inject:disabled{opacity:.7;cursor:wait}
+.footer{text-align:center;font-size:10px;color:#666;padding:0 12px 14px}
+.floating{display:none;position:fixed;top:50%;left:12px;transform:translateY(-50%);width:58px;height:58px;background:var(--red);color:#fff;border:2px solid #fff;border-radius:15px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 0 15px #ff000066;z-index:999}
+.hidden{display:none!important}
+@media(max-height:720px){body{align-items:flex-start}.panel{margin:4px 0}}
+</style>
+</head>
+<body>
+<button class="floating" id="floating" onclick="showPanel()">FFH4X.</button>
+<main class="panel" id="panel">
+  <header class="header">
+    <div class="logo">FFH4X<span>.</span></div>
+    <button class="close" aria-label="Esconder painel" onclick="hidePanel()">−</button>
+  </header>
+  <section class="content">
+    <div class="status" id="status">● PAINEL VISUAL • PRONTO</div>
+    <div class="section">LOCALIZAÇÃO VISUAL</div>
+    <div class="aim-buttons">
+      <button class="aim-btn" onclick="toggleAim(this)">CABEÇA</button>
+      <button class="aim-btn" onclick="toggleAim(this)">PESCOÇO</button>
+      <button class="aim-btn" onclick="toggleAim(this)">PEITO</button>
+    </div>
+    <div class="section">CONFIGURAÇÕES</div>
+    <div class="row"><span>Assistência visual</span><label class="switch"><input type="checkbox" onchange="changed()"><span class="track"></span></label></div>
+    <div class="row"><span>Precisão visual</span><label class="switch"><input type="checkbox" onchange="changed()"><span class="track"></span></label></div>
+    <div class="row"><span>Reduzir efeitos visuais</span><label class="switch"><input type="checkbox" onchange="changed()"><span class="track"></span></label></div>
+    <div class="section">AJUSTES</div>
+    <div class="range-info"><span>Suavidade</span><span id="v1">50%</span></div>
+    <input aria-label="Suavidade" type="range" min="0" max="100" value="50" oninput="updateRange(this,'v1')">
+    <div class="range-info" style="margin-top:18px"><span>Campo visual</span><span id="v2">70%</span></div>
+    <input aria-label="Campo visual" type="range" min="0" max="100" value="70" oninput="updateRange(this,'v2')">
+    <div class="range-info" style="margin-top:18px"><span>Intensidade visual</span><span id="v3">50%</span></div>
+    <input aria-label="Intensidade visual" type="range" min="0" max="100" value="50" oninput="updateRange(this,'v3')">
+    <div class="section">PERFIL</div>
+    <select class="select" aria-label="Perfil" onchange="changed()">
+      <option>Personalizado</option><option>Desempenho</option><option>Equilibrado</option><option>Visual</option>
+    </select>
+    <button class="inject" id="inject" onclick="injectCodes()">INJETAR</button>
+  </section>
+  <footer class="footer">FFH4X. • INTERFACE DE DEMONSTRAÇÃO</footer>
+</main>
+<script>
+let timer=null;
+function changed(){
+  clearTimeout(timer);
+  const b=document.getElementById('inject'),s=document.getElementById('status');
+  b.disabled=false;b.textContent='INJETAR';
+  s.textContent='● CONFIGURAÇÕES ALTERADAS';s.style.color='#ff3333';
+}
+function toggleAim(btn){btn.classList.toggle('active');changed()}
+function updateRange(r,id){document.getElementById(id).textContent=r.value+'%';changed()}
+function injectCodes(){
+  clearTimeout(timer);
+  const b=document.getElementById('inject'),s=document.getElementById('status');
+  b.disabled=true;b.textContent='INJETANDO CÓDIGOS...';
+  s.textContent='● PROCESSANDO...';s.style.color='#ffaa00';
+  timer=setTimeout(()=>{
+    b.disabled=false;b.textContent='CÓDIGOS INJETADOS COM SUCESSO';
+    s.textContent='● CONCLUÍDO';s.style.color='#00ff88';
+  },5000);
+}
+function hidePanel(){document.getElementById('panel').classList.add('hidden');document.getElementById('floating').style.display='block'}
+function showPanel(){document.getElementById('panel').classList.remove('hidden');document.getElementById('floating').style.display='none'}
+</script>
+</body>
+</html>
